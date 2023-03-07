@@ -5,7 +5,7 @@ from helper import *
 def main():
     cwd = os.getcwd()
     
-    test = pd.read_csv(cwd+'\\results\\data\\testing_dataset.csv',index_col='date')
+    test = pd.read_csv(cwd+'\\data\\testing_dataset.csv',index_col='date')
     model = models_loader()
     forecasts = model_forecast(model = model , series = test.values)
     

@@ -17,7 +17,7 @@ def change_perc(series,lenth):
 
 def load_transform_data(path= None, series= 'CPI', lenth= 12, stat_date= '1998'):
   
-    df = pd.read_csv(cwd+f'\\results\\data\\{path}')
+    df = pd.read_csv(cwd+f'\\data\\{path}')
     df[f'{series}(%)'] = change_perc(df[series],lenth=lenth)
     df.set_index('date',inplace= True)
     df.index = pd.to_datetime(df.index)
@@ -101,9 +101,9 @@ def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
     train = train[0 : round(len(train) * (1-valid_split_ratio))]
     
     
-    train.to_csv(cwd+'\\results\\data\\training_dataset.csv')
-    test.to_csv(cwd+ '\\results\\data\\testing_dataset.csv')
-    valid.to_csv(cwd+ '\\results\data\\validation_dataset.csv')
+    train.to_csv(cwd+'\\data\\training_dataset.csv')
+    test.to_csv(cwd+ '\\data\\testing_dataset.csv')
+    valid.to_csv(cwd+ '\\data\\validation_dataset.csv')
 
 def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=100):
 
