@@ -8,7 +8,13 @@ import tensorflow as tf
 
 cwd = os.getcwd()
 
-def change_perc(series,lenth):
+def get_percentage_change(series,lenth):
+  """
+    Returns the percentage change between values in the given series.
+    series :  
+    lenth  (int) :  lenth 
+  """
+  
   diff_data=[]
   for i in range(lenth , len(series)):
     value = (series[i] - series[i-lenth])/series[i-lenth] * 100
