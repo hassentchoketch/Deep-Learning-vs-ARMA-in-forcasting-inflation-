@@ -7,7 +7,8 @@ def main():
     inf = load_transform_data(path='DZ_Consumption_price_index.csv')
     # print(inf.shape) (300, 1) 
     # print(inf.columns) CPI(%)
-
+    if not os.path.exists(os.path.join(cwd, "results")):
+      os.mkdir(cwd + "\\results") 
     if not os.path.exists(os.path.join(cwd+'\\results', "graphs")):
         os.mkdir(cwd + "\\results\\graphs")
     graghs_path = cwd + "\\results\\graphs"
