@@ -8,23 +8,39 @@ import tensorflow as tf
 
 cwd = os.getcwd()
 
-def get_percentage_change(series,lenth):
-  """
+def get_percentage_change(series: pd.Series,length:int) -> pd.Series:
+    """
     Returns the percentage change between values in the given series.
-    series :  
-    lenth  (int) :  lenth 
-  """
+
+    Args:
+         series : A Pandas Series object containing the values to compute the percentage of.  
+         length  (int) :  An integer representing the number of periods to use when calculating the percentage change.
+    Returns :
+         A Pandas Series object containing the percentage change between values in input series.
+
+     Raises:
+         ValueError: If the input series is not a Pandas Series object or if input length is greater than or equal to the langth of the input series.          
+    """
+    # check that the input series is a Pandas Series object 
+    if not isinstance(series , pd.Series):
+      raise ValueError('Input series must be a Pandas Series object')
+   
+    # Check that the input series has a DatetimeIndex
+    if not isinstance(series.index, pd.DatetimeIndex):
+        series.index = pd.to_datetime(series.index)
+        # raise ValueError("Input series must have a DatetimeIndex")
+   
+    # Check that the input length is valid
+    if length >= len(series):
+        raise ValueError("Input length must be less than the length of the input series")
   
-  diff_data=[]
-  for i in range(lenth , len(series)):
-    value = (series[i] - series[i-lenth])/series[i-lenth] * 100
-    diff_data.append(value)
-  return pd.Series(diff_data,index=series.index[12:])
+    new_series =[(series[i] - series[i-length])/series[i-length] * 100 for i in range(length , len(series)) ]
+    return pd.Series(new_series,index=series.index[length:])
 
 def load_transform_data(path= None, series= 'CPI', lenth= 12, stat_date= '1998'):
   
     df = pd.read_csv(cwd+f'\\data\\{path}')
-    df[f'{series}(%)'] = change_perc(df[series],lenth=lenth)
+    df[f'{series}(%)'] = get_percentage_change(df[series],lenth=lenth)
     df.set_index('date',inplace= True)
     df.index = pd.to_datetime(df.index)
     var = df.loc[stat_date:,f'{series}(%)'].reset_index()
