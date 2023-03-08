@@ -37,10 +37,10 @@ def get_percentage_change(series: pd.Series,length:int) -> pd.Series:
     new_series =[(series[i] - series[i-length])/series[i-length] * 100 for i in range(length , len(series)) ]
     return pd.Series(new_series,index=series.index[length:])
 
-def load_transform_data(path= None, series= 'CPI', lenth= 12, stat_date= '1998'):
+def load_transform_data(path= None, series= 'CPI(%)', lenth= 12, stat_date= '1998'):
   
     df = pd.read_csv(cwd+f'\\data\\{path}')
-    df[f'{series}(%)'] = get_percentage_change(df[series],lenth=lenth)
+    df[f'{series}'] = get_percentage_change(df[series],lenth=lenth)
     df.set_index('date',inplace= True)
     df.index = pd.to_datetime(df.index)
     var = df.loc[stat_date:,f'{series}(%)'].reset_index()
