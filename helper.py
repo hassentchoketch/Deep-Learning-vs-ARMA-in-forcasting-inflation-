@@ -247,6 +247,24 @@ def LSTM_construction(input_shape=12,layer_num=2,layer_units=64,output_units=1,a
 
 def tune_learning_rate(model=None,dataset= None,validation_data=None,path=None, patience = 5 ,loss='mse', epochs= 100, title='Tune_learning_rate',momentum=0.9,plot = False):
 
+    '''Tunes the learning rate by training the model with a range of learning rates and plotting the loss against the learning rate.
+
+    Args:
+
+      model: Pre-trained neural network model to be fine-tuned.
+      dataset: Training dataset to be used for fine-tuning.
+      validation_data: Validation dataset to be used for fine-tuning.
+      path: Path to save the generated plot.
+      patience: Number of epochs with no improvement after which training will be stopped.
+      loss: Loss function to be used during training.
+      epochs: Number of epochs to train the model.
+      title: Title of the generated plot.
+      momentum: Momentum value for the optimizer.
+      plot: Boolean value indicating whether to generate a plot of the learning rate vs. loss.
+      
+    Returns:
+      optimal_lr: The optimal learning rate that minimizes the validation loss.
+    '''
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(
         lambda epoch: 1e-5 * 10 ** (epoch / 20)
     )
