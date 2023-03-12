@@ -112,6 +112,24 @@ def plot_heatmap(time_series=None,name ='CPI',path= None):
     plt.close()
 
 def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
+    """Split a time series data into training, testing, and validation sets and save them as CSV files.
+
+    Args:
+        time_series (pandas DataFrame): A pandas DataFrame containing the time series data to split.
+            The time series data should be in the form of a single column with the datetime as the index.
+        test_split_ratio (float): The ratio of the data to use for testing. Default value is 0.1 (10%).
+            Must be a value between 0 and 0.2.
+        valid_split_ratio (float): The ratio of the training data to use for validation. Default value is 0.2 (20%).
+            Must be a value between 0 and 0.3.
+
+    Returns:
+        tuple: A tuple containing three pandas DataFrames, in the order of (train, test, valid).
+            train: The training set.
+            test: The testing set.
+            valid: The validation set.
+
+    """
+
     if test_split_ratio > 0.2 or test_split_ratio<= 0:
         test_split_ratio = 0.2
     if valid_split_ratio > 0.3 or valid_split_ratio<= 0:
@@ -126,6 +144,7 @@ def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
     train.to_csv(cwd+'\\data\\training_dataset.csv')
     test.to_csv(cwd+ '\\data\\testing_dataset.csv')
     valid.to_csv(cwd+ '\\data\\validation_dataset.csv')
+    return train,test,valid
 
 def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=100):
 
