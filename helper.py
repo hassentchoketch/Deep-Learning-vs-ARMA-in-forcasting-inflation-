@@ -137,7 +137,8 @@ def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=
 
     return dataset
 
-def LSTM_construction(input_shape=12,layer_num=2,layer_units=64,output_units=1,activation='relu'):
+# Models -------------------------------------------------------------------------------------------
+def LSTM_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
 
     """
     input_layer : number of denses in input layer.
@@ -204,33 +205,219 @@ def LSTM_construction(input_shape=12,layer_num=2,layer_units=64,output_units=1,a
         )
     return LSTM
 
-def tune_learning_rate(model=None,dataset= None,validation_data=None,path=None, patience = 5 ,loss='mse', epochs= 100, title='Tune_learning_rate',momentum=0.9,plot = False):
+def DNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
+    """
+    input_layer : number of denses in input layer.
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :DNN model
+    """
+    if layer_num == 1:
+        DNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Dense(
+                    input_shape, activation=activation, input_shape=[input_shape]
+                ),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+            ]
+        )
+    if layer_num == 2:
+        DNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Dense(
+                    input_shape, activation, input_shape=[input_shape]
+                ),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+            ]
+        )
+    if layer_num == 3:
+        DNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Dense(
+                    input_shape, activation=activation, input_shape=[input_shape]
+                ),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+            ]
+        )
+    return DNN
 
-    lr_schedule = tf.keras.callbacks.LearningRateScheduler(
-        lambda epoch: 1e-5 * 10 ** (epoch / 20)
-    )
+def RNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
+    """
+
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :RNN model
+    """
+    if layer_num == 1:
+        simple_RNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(
+                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
+                ),
+                tf.keras.layers.SimpleRNN(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 2:
+        simple_RNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(
+                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
+                ),
+                tf.keras.layers.SimpleRNN(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.SimpleRNN(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 3:
+        simple_RNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(
+                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
+                ),
+                tf.keras.layers.SimpleRNN(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.SimpleRNN(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.SimpleRNN(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    return simple_RNN
+
+def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
+    """
+    input_layer : number of denses in input layer.
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :LASTM model
+    """
+    if layer_num == 1:
+        CNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Conv1D(
+                    filters=64,
+                    kernel_size=3,
+                    strides=1,
+                    padding="causal",
+                    activation=activation,
+                    input_shape=[input_shape, 1],
+                ),
+                tf.keras.layers.LSTM(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 2:
+        CNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Conv1D(
+                    filters=64,
+                    kernel_size=3,
+                    strides=1,
+                    padding="causal",
+                    activation=activation,
+                    input_shape=[input_shape, 1],
+                ),
+                tf.keras.layers.LSTM(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.LSTM(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 3:
+        CNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Conv1D(
+                    filters=64,
+                    kernel_size=3,
+                    strides=1,
+                    padding="causal",
+                    activation=activation,
+                    input_shape=[input_shape, 1],
+                ),
+                tf.keras.layers.LSTM(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.LSTM(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.LSTM(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    return CNN
+
+# -----------------------------------------------------------------------------------------------------
+
+def tune_learning_rate(model=None,dataset= None,validation_data=None,fig_name=None, title = None ,patience = 5 ,loss='mse', epochs= 100,momentum=0.9,plot = False):
+   
+   
+   
+    # Define the learning rate schedule
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-5 * 10 ** (epoch / 20))
+    
+    # Define the optimizer and compile the model
     optimizer = tf.keras.optimizers.SGD(momentum)
     model.compile(loss=loss, optimizer=optimizer)
+    
     # Define early stopping callback
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience)
+    
+    # Train the model with the early stopping callback
     history = model.fit(dataset, epochs=epochs, validation_data=validation_data, callbacks=[lr_schedule, early_stopping])
+    
+    # Compute the learning rates used during training
     lrs = 1e-5 * (10 ** (np.arange(epochs) / 20))
+    
+
+    lr_loss = history.history['loss']
+    
+    
     if plot:
-      # Plot losses vs learning rates
+      # Plot the losses vs learning rates graph and save it to file
       epochs = len(history.history['loss'])
       plt.figure(figsize=(10, 4))
       plt.grid(True)
-      plt.semilogx(lrs, history.history["loss"])
+      plt.semilogx(lrs[:epochs], history.history["loss"])
       plt.tick_params("both", length=10, width=1, which="both")
-      plt.axis([1e-5, 1e-1, 0, 20])
+    #   plt.axis([1e-5, 1e-1, 0, 20])
       plt.title(title)
-      plt.savefig(cwd + f'\\results\\graphs\\{path}')
+      plt.xlabel('Learning rate')
+      plt.ylabel('Loss')
+      plt.savefig(cwd + f'\\results\\graphs\\{fig_name}')
       plt.close()
     
     # Select optimal learning rate
     optimal_lr = lrs[np.argmin(history.history['val_loss'])]
     print('Optimal learning rate:', optimal_lr)
-    return optimal_lr
+    return optimal_lr ,lr_loss
 
 def model_train(model=None,dataset= None,validation_data=None,learning_rate=None,patience=5,loss='mse',metrics='mae', epochs= 100,momentum=0.9):
     callback = tf.keras.callbacks.EarlyStopping(patience=patience)
@@ -260,7 +447,7 @@ def loss_comp(y_pred, y_truth, loss):
             print("Error:The loss functin is illegal. Turn to default loss function: rmse" )
     return tf.keras.metrics.RootMeanSquaredError(y_pred, y_truth).numpy()
 
-def plot_series(x,y,path,format="-",start=0,end=None,title=None,xlabel=None,ylabel=None,legend=None,loss=None):
+def plot_series(x,y,fig_name=None,format="-",start=0,end=None,title=None,xlabel=None,ylabel=None,legend=None,loss=None):
     """
     Visualizes time series data
 
@@ -299,17 +486,17 @@ def plot_series(x,y,path,format="-",start=0,end=None,title=None,xlabel=None,ylab
     plt.title(title)
     # Overlay a grid on the graph
     plt.grid(True)
-    plt.text(0.95, 0.01, " ** Loss value = : {:0.4f}".format(loss), verticalalignment='bottom', horizontalalignment='right',color='green',fontsize=12)
-
-    plt.savefig(cwd + f'/results/graphs/{path}')
+    plt.text(0.95, 0.01, " ** loss value = : {:0.4f}".format(loss), verticalalignment='bottom', horizontalalignment='right',color='green',fontsize=12)
+   
+    plt.savefig(cwd + f'\\results\\graphs\\{fig_name}')
     # Draw the graph on screen
     plt.close()
 
-def plot_training_loss(history ,path ='LSTM training_loss.png'):
+def plot_training_validation_loss(model=None,history=None):
     loss = history.history["loss"]
     val_loss = history.history["val_loss"]
     epochs = range(len(loss))
-    plot_series(epochs, (loss,val_loss), path, title="training_loss ")
+    plot_series(epochs, (loss,val_loss), fig_name=f'{model}_training_loss.png', title=f"{model} training loss",xlabel='Epochs',ylabel='Loss',legend=['Training Loss','Validation Loss'],loss = [loss,val_loss])
     
 def loss_comp(y_pred, y_truth, loss= 'mse'):
     """
@@ -362,12 +549,10 @@ def model_forecast(model, series, window_size=12, batch_size=30):
 
     return forecast.squeeze()
 
-def models_saver( model,loss=None):
-  if not os.path.exists(os.path.join(cwd+'\\results', "models")):
-    os.mkdir(cwd + "\\results\\models")
-  model.save(cwd + "\\results\\models\\LSTM_model_with_val_loss_{:0.4f}.h5".format(loss))
+def models_saver(model=None,name=None):
+  model.save(cwd + f"\\results\\models\\{name}_model.h5")
 
-def models_loader (): 
-  model_path = input("Pleas enter the model file name:")
-  model = tf.keras.models.load_model(cwd + f'\\results\\models\\{model_path}',compile=False )
+def models_loader (model): 
+  saved_model = f"{model}_model.h5"
+  model = tf.keras.models.load_model(cwd + f'\\results\\models\\{saved_model}',compile=False )
   return model
