@@ -5,8 +5,8 @@ from helper import *
 
 def main():
     cwd = os.getcwd()
-    train = pd.read_csv(cwd+'\\results\\data\\training_dataset.csv',index_col='date')
-    valid = pd.read_csv(cwd+'\\results\\data\\validation_dataset.csv',index_col='date')
+    train = pd.read_csv(cwd+'\\data\\training_dataset.csv',index_col='date')
+    valid = pd.read_csv(cwd+'\\data\\validation_dataset.csv',index_col='date')
 
     train_dataset = windowed_dataset(series=train.values)
     valid_dataset = windowed_dataset(series=valid.values)

@@ -8,17 +8,39 @@ import tensorflow as tf
 
 cwd = os.getcwd()
 
-def change_perc(series,lenth):
-  diff_data=[]
-  for i in range(lenth , len(series)):
-    value = (series[i] - series[i-lenth])/series[i-lenth] * 100
-    diff_data.append(value)
-  return pd.Series(diff_data,index=series.index[12:])
+def get_percentage_change(series: pd.Series,length:int) -> pd.Series:
+    """
+    Returns the percentage change between values in the given series.
 
-def load_transform_data(path= None, series= 'CPI', lenth= 12, stat_date= '1998'):
+    Args:
+         series : A Pandas Series object containing the values to compute the percentage of.  
+         length  (int) :  An integer representing the number of periods to use when calculating the percentage change.
+    Returns :
+         A Pandas Series object containing the percentage change between values in input series.
+
+     Raises:
+         ValueError: If the input series is not a Pandas Series object or if input length is greater than or equal to the langth of the input series.          
+    """
+    # check that the input series is a Pandas Series object 
+    if not isinstance(series , pd.Series):
+      raise ValueError('Input series must be a Pandas Series object')
+   
+    # Check that the input series has a DatetimeIndex
+    if not isinstance(series.index, pd.DatetimeIndex):
+        series.index = pd.to_datetime(series.index)
+        # raise ValueError("Input series must have a DatetimeIndex")
+   
+    # Check that the input length is valid
+    if length >= len(series):
+        raise ValueError("Input length must be less than the length of the input series")
   
-    df = pd.read_csv(cwd+f'\\results\\data\\{path}')
-    df[f'{series}(%)'] = change_perc(df[series],lenth=lenth)
+    new_series =[(series[i] - series[i-length])/series[i-length] * 100 for i in range(length , len(series)) ]
+    return pd.Series(new_series,index=series.index[length:])
+
+def load_transform_data(path= None, series= 'CPI(%)', lenth= 12, stat_date= '1998'):
+  
+    df = pd.read_csv(cwd+f'\\data\\{path}')
+    df[f'{series}'] = get_percentage_change(df[series],lenth=lenth)
     df.set_index('date',inplace= True)
     df.index = pd.to_datetime(df.index)
     var = df.loc[stat_date:,f'{series}(%)'].reset_index()
@@ -90,6 +112,24 @@ def plot_heatmap(time_series=None,name ='CPI',path= None):
     plt.close()
 
 def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
+    """Split a time series data into training, testing, and validation sets and save them as CSV files.
+
+    Args:
+        time_series (pandas DataFrame): A pandas DataFrame containing the time series data to split.
+            The time series data should be in the form of a single column with the datetime as the index.
+        test_split_ratio (float): The ratio of the data to use for testing. Default value is 0.1 (10%).
+            Must be a value between 0 and 0.2.
+        valid_split_ratio (float): The ratio of the training data to use for validation. Default value is 0.2 (20%).
+            Must be a value between 0 and 0.3.
+
+    Returns:
+        tuple: A tuple containing three pandas DataFrames, in the order of (train, test, valid).
+            train: The training set.
+            test: The testing set.
+            valid: The validation set.
+
+    """
+
     if test_split_ratio > 0.2 or test_split_ratio<= 0:
         test_split_ratio = 0.2
     if valid_split_ratio > 0.3 or valid_split_ratio<= 0:
@@ -101,9 +141,10 @@ def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
     train = train[0 : round(len(train) * (1-valid_split_ratio))]
     
     
-    train.to_csv(cwd+'\\results\\data\\training_dataset.csv')
-    test.to_csv(cwd+ '\\results\\data\\testing_dataset.csv')
-    valid.to_csv(cwd+ '\\results\data\\validation_dataset.csv')
+    train.to_csv(cwd+'\\data\\training_dataset.csv')
+    test.to_csv(cwd+ '\\data\\testing_dataset.csv')
+    valid.to_csv(cwd+ '\\data\\validation_dataset.csv')
+    return train,test,valid
 
 def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=100):
 
@@ -377,12 +418,9 @@ def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units
 # -----------------------------------------------------------------------------------------------------
 
 def tune_learning_rate(model=None,dataset= None,validation_data=None,fig_name=None, title = None ,patience = 5 ,loss='mse', epochs= 100,momentum=0.9,plot = False):
-   
-   
-   
     # Define the learning rate schedule
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-5 * 10 ** (epoch / 20))
-    
+
     # Define the optimizer and compile the model
     optimizer = tf.keras.optimizers.SGD(momentum)
     model.compile(loss=loss, optimizer=optimizer)
