@@ -524,7 +524,7 @@ def plot_series(x,y,fig_name=None,format="-",start=0,end=None,title=None,xlabel=
     plt.title(title)
     # Overlay a grid on the graph
     plt.grid(True)
-    plt.text(0.95, 0.01, " ** loss value = : {:0.4f}".format(loss), verticalalignment='bottom', horizontalalignment='right',color='green',fontsize=12)
+    # plt.text(0.95, 0.01, " ** loss value = : {:0.4f}".format(loss), verticalalignment='bottom', horizontalalignment='right',color='green',fontsize=12)
    
     plt.savefig(cwd + f'\\results\\graphs\\{fig_name}')
     # Draw the graph on screen
@@ -534,7 +534,7 @@ def plot_training_validation_loss(model=None,history=None):
     loss = history.history["loss"]
     val_loss = history.history["val_loss"]
     epochs = range(len(loss))
-    plot_series(epochs, (loss,val_loss), fig_name=f'{model}_training_loss.png', title=f"{model} training loss",xlabel='Epochs',ylabel='Loss',legend=['Training Loss','Validation Loss'],loss = [loss,val_loss])
+    plot_series(epochs, (loss,val_loss), fig_name=f'{model}_training_loss.png', title=f"{model} training loss",xlabel='Epochs',ylabel='Loss',legend=['Training Loss','Validation Loss'],loss = val_loss)
     
 def loss_comp(y_pred, y_truth, loss= 'mse'):
     """
