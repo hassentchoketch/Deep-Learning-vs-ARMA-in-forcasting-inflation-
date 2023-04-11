@@ -6,6 +6,9 @@ import statsmodels.api as sm
 import seaborn as sns
 import tensorflow as tf 
 
+
+tf.config.run_functions_eagerly(True)
+
 cwd = os.getcwd()
 
 def get_percentage_change(series: pd.Series,length:int) -> pd.Series:
@@ -26,28 +29,32 @@ def get_percentage_change(series: pd.Series,length:int) -> pd.Series:
       raise ValueError('Input series must be a Pandas Series object')
    
     # Check that the input series has a DatetimeIndex
-    if not isinstance(series.index, pd.DatetimeIndex):
-        series.index = pd.to_datetime(series.index)
+    # if not isinstance(series.index, pd.DatetimeIndex):
+        # series.index = pd.to_datetime(series.index)
         # raise ValueError("Input series must have a DatetimeIndex")
-   
+        
+    # apply the X13ARIMA filter
+    # series = x13_arima_analysis(series,freq='M')
+    # series= series.seasadj
     # Check that the input length is valid
     if length >= len(series):
         raise ValueError("Input length must be less than the length of the input series")
   
     new_series =[(series[i] - series[i-length])/series[i-length] * 100 for i in range(length , len(series)) ]
+    
     return pd.Series(new_series,index=series.index[length:])
 
-def load_transform_data(path= None, series= 'CPI(%)', lenth= 12, stat_date= '1998'):
+def load_transform_data(data_file= None, series= 'CPI(%)', length= 12, start_date= '1998',end_date='2022'):
   
-    df = pd.read_csv(cwd+f'\\data\\{path}')
-    df[f'{series}'] = get_percentage_change(df[series],lenth=lenth)
+    df = pd.read_csv(cwd+f'\\results\\data\\{data_file}')
+    df[series] = get_percentage_change(df['CPI'],length)
     df.set_index('date',inplace= True)
     df.index = pd.to_datetime(df.index)
-    var = df.loc[stat_date:,f'{series}(%)'].reset_index()
+    var = df.loc[start_date:end_date,series].reset_index()
     var.set_index('date',inplace= True)
     return var
 
-def plot_description(time_series=None, title = None, path=None ,window_size = 0.05,test_split_ratio=0.1,valid_split_ratio=0.2, if_split=False ):
+def plot_description(time_series=None, title = None, path=None ,window_size = 0.05,test_split_ratio=0.08,valid_split_ratio=0.22, if_split=False ):
 
     """
     time_series: the time series which will be plotted
@@ -56,12 +63,11 @@ def plot_description(time_series=None, title = None, path=None ,window_size = 0.
     """
     fig = plt.gcf()
     fig.set_size_inches(16, 6)
-    plt.style.use('seaborn')
+    # plt.style.use('seaborn')
     if if_split:
-        train = time_series[0 : round(len(time_series) * (1-test_split_ratio))]
+        train = time_series[0 : round(len(time_series) * (1-(test_split_ratio + valid_split_ratio)))]
         test  = time_series[round(len(time_series) * (1-test_split_ratio)) :]
-        valid = train[round(len(train) * (1-valid_split_ratio)) :] 
-        train = train[0 : round(len(train) * (1-valid_split_ratio))]
+        valid = time_series[round(len(train)) : (round(len(time_series))-round(len(test)))]
         plt.plot(train, label="train")
         plt.plot(test, label="test")
         plt.plot(valid, label="valid")
@@ -71,7 +77,7 @@ def plot_description(time_series=None, title = None, path=None ,window_size = 0.
         plt.plot(time_series, label="Series")
         plt.plot(time_series.rolling(int(window_size * len(time_series))).mean(),"--",label="Rolling mean",)
         plt.plot(time_series.rolling(int(window_size * len(time_series))).std(),":",label="Rolling Std",)
-    plt.title("Overview Description Plot of " + title.replace("_", " "),fontsize=20,fontweight='medium')
+    # plt.title("Overview Description Plot of " + title.replace("_", " "),fontsize=20,fontweight='medium')
     plt.legend(loc="best")
     plt.savefig(cwd+f'\\results\\graphs\\{path}')
     # plt.show()
@@ -111,7 +117,7 @@ def plot_heatmap(time_series=None,name ='CPI',path= None):
     # plt.show()
     plt.close()
 
-def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
+def data_split(time_series=None,test_split_ratio=0.08,valid_split_ratio = 0.20,if_save = True):
     """Split a time series data into training, testing, and validation sets and save them as CSV files.
 
     Args:
@@ -130,20 +136,21 @@ def data_split(time_series=None,test_split_ratio=0.1,valid_split_ratio = 0.2):
 
     """
 
-    if test_split_ratio > 0.2 or test_split_ratio<= 0:
+    if test_split_ratio > 0.2 or test_split_ratio< 0:
         test_split_ratio = 0.2
-    if valid_split_ratio > 0.3 or valid_split_ratio<= 0:
+    if valid_split_ratio > 0.3 or valid_split_ratio< 0:
         test_split_ratio = 0.3
 
-    train = time_series[0 : round(len(time_series) * (1-test_split_ratio))]
+    train = time_series[0 : round(len(time_series) * (1-(test_split_ratio + valid_split_ratio)))]
     test  = time_series[round(len(time_series) * (1-test_split_ratio))-12 :]
-    valid = train[round(len(train) * (1-valid_split_ratio)) :]
-    train = train[0 : round(len(train) * (1-valid_split_ratio))]
+    valid = time_series[round(len(train)) : (round(len(time_series))-round(len(test))+12)]
+    # train = train[0 : round(len(train) * (1-valid_split_ratio))]
     
+    if if_save:
+        train.to_csv(cwd+'\\results\\data\\training_dataset.csv')
+        test.to_csv(cwd+ '\\results\\data\\testing_dataset.csv')
+        valid.to_csv(cwd+ '\\results\\data\\validation_dataset.csv')
     
-    train.to_csv(cwd+'\\data\\training_dataset.csv')
-    test.to_csv(cwd+ '\\data\\testing_dataset.csv')
-    valid.to_csv(cwd+ '\\data\\validation_dataset.csv')
     return train,test,valid
 
 def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=100):
@@ -419,7 +426,7 @@ def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units
 
 def tune_learning_rate(model=None,dataset= None,validation_data=None,fig_name=None, title = None ,patience = 5 ,loss='mse', epochs= 100,momentum=0.9,plot = False):
     # Define the learning rate schedule
-    lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-5 * 10 ** (epoch / 20))
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-5 * 5 ** (epoch / 20))
 
     # Define the optimizer and compile the model
     optimizer = tf.keras.optimizers.SGD(momentum)
@@ -429,10 +436,10 @@ def tune_learning_rate(model=None,dataset= None,validation_data=None,fig_name=No
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience)
     
     # Train the model with the early stopping callback
-    history = model.fit(dataset, epochs=epochs, validation_data=validation_data, callbacks=[lr_schedule, early_stopping])
+    history = model.fit(dataset, epochs=epochs, validation_data=validation_data, callbacks=[lr_schedule, early_stopping],verbose=0)
     
     # Compute the learning rates used during training
-    lrs = 1e-5 * (10 ** (np.arange(epochs) / 20))
+    lrs = 1e-5 * (5 ** (np.arange(epochs) / 20))
     
 
     lr_loss = history.history['loss']
@@ -462,7 +469,7 @@ def model_train(model=None,dataset= None,validation_data=None,learning_rate=None
     # learning_rate = float(input("Pleas enter the optimal lr:"))
     optimizer = tf.keras.optimizers.SGD(learning_rate, momentum=momentum)
     model.compile(loss=loss, optimizer=optimizer, metrics=[metrics])
-    history = model.fit(dataset, epochs=epochs,validation_data = validation_data,callbacks=[callback])
+    history = model.fit(dataset, epochs=epochs,validation_data = validation_data,callbacks=[callback],verbose=0)
     return history
 
 def loss_comp(y_pred, y_truth, loss):
@@ -479,11 +486,11 @@ def loss_comp(y_pred, y_truth, loss):
     elif loss == "mae":
         return tf.keras.metrics.mean_absolute_error(y_pred, y_truth).numpy()
         # r2_score(y_truth, y_pred)
-    else:
-        if loss != "rmse":
-            # logger.warning(
-            print("Error:The loss functin is illegal. Turn to default loss function: rmse" )
-    return tf.keras.metrics.RootMeanSquaredError(y_pred, y_truth).numpy()
+    elif loss == "rmse":
+        return np.sqrt(tf.keras.metrics.mean_squared_error(y_pred, y_truth).numpy())
+        # return tf.keras.metrics.RootMeanSquaredError(y_pred, y_truth).numpy()
+    # else : 
+    #     logger.warning(print("Error:The loss functin is illegal. Turn to default loss function: rmse or mse or mae" ))
 
 def plot_series(x,y,fig_name=None,format="-",start=0,end=None,title=None,xlabel=None,ylabel=None,legend=None,loss=None):
     """
@@ -517,6 +524,7 @@ def plot_series(x,y,fig_name=None,format="-",start=0,end=None,title=None,xlabel=
     plt.xlabel(xlabel)
     # Label the y-axis
     plt.ylabel(ylabel)
+     
     # Set the legend
     if legend:
         plt.legend(legend, loc="best")
@@ -536,25 +544,25 @@ def plot_training_validation_loss(model=None,history=None):
     epochs = range(len(loss))
     plot_series(epochs, (loss,val_loss), fig_name=f'{model}_training_loss.png', title=f"{model} training loss",xlabel='Epochs',ylabel='Loss',legend=['Training Loss','Validation Loss'],loss = val_loss)
     
-def loss_comp(y_pred, y_truth, loss= 'mse'):
-    """
-    y_pred: predicted values.
-    y_truth: ground truth.
-    loss_func: the function used to calculate loss.
-    return loss value.
-    """
-    if loss == "mse":
-        return tf.keras.metrics.mean_squared_error(y_pred, y_truth).numpy()
-        # mean_squared_error(y_truth, y_pred)
-    elif loss == "mae":
-        return tf.keras.metrics.mean_absolute_error(y_pred, y_truth).numpy()
-        # r2_score(y_truth, y_pred)
-    else:
-        if loss != "rmse":
-            print(
-                "The loss functin is illegal. Turn to default loss function: mse"
-            )
-        return tf.keras.metrics.RootMeanSquaredError(y_pred, y_truth).numpy
+# def loss_comp(y_pred, y_truth, loss= 'mse'):
+#     """
+#     y_pred: predicted values.
+#     y_truth: ground truth.
+#     loss_func: the function used to calculate loss.
+#     return loss value.
+#     """
+#     if loss == "mse":
+#         return tf.keras.metrics.mean_squared_error(y_pred, y_truth).numpy()
+#         # mean_squared_error(y_truth, y_pred)
+#     elif loss == "mae":
+#         return tf.keras.metrics.mean_absolute_error(y_pred, y_truth).numpy()
+#         # r2_score(y_truth, y_pred)
+#     else:
+#         if loss != "rmse":
+#             print(
+#                 "The loss functin is illegal. Turn to default loss function: mse"
+#             )
+#         return tf.keras.metrics.RootMeanSquaredError(y_pred, y_truth).numpy
         
 def model_forecast(model, series, window_size=12, batch_size=30):
 
