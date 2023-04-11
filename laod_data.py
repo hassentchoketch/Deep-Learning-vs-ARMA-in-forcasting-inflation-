@@ -2,6 +2,9 @@ import requests
 import os
 import pandas as pd
 
+import warnings
+warnings.filterwarnings('ignore')
+
 url = "http://dataservices.imf.org/REST/SDMX_JSON.svc/"
 key = "CompactData/IFS/M.DZ.PCPI_IX"  # adjust codes here
 
@@ -18,6 +21,8 @@ df = df.set_index(pd.to_datetime(df["date"]))["CPI"].astype("float")
 
 # Save cleaned dataframe as a csv file
 cwd = os.getcwd()
-if not os.path.exists(os.path.join(cwd + "data")):
+if not os.path.exists(os.path.join(cwd + "results")):
+    os.mkdir(cwd + "\\results")
+if not os.path.exists(os.path.join(cwd + "\\results\\data")):
     os.mkdir(cwd + "\\results\\data")
-df.to_csv(cwd + "\\data\\DZ_Consumption_price_index.csv", header=True)
+df.to_csv(cwd + "\\results\\data\\DZ_Consumption_price_index.csv", header=True)
