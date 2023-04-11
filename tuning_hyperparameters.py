@@ -3,6 +3,9 @@ import pandas as pd
 import itertools
 from helper import *
 
+import warnings
+warnings.filterwarnings('ignore')
+
 def main():
     cwd = os.getcwd()
     train = pd.read_csv(cwd+'\\results\\data\\training_dataset.csv',index_col='date',parse_dates=['date'])
@@ -15,7 +18,7 @@ def main():
     valid_actual =  valid[12 - 1 :]
     
     layer_nums = [2,3]
-    layer_units = [32]#, 64, 128, 256]
+    layer_units = [16,32,64, 128]
 
 
     model_name=[]
@@ -41,13 +44,11 @@ def main():
             train_predicts = model_forecast(model=models[model],series=train.values)
             valid_predicts = model_forecast(model=models[model],series=valid.values)
     
-            print(f'Mean Squared Error of training_{model}_{layer_num}_{layer_unit} is:', loss_comp(train_predicts, train_actual.values.reshape(-1)))
-            print(f'Mean Squared Error of validation_{model}_{layer_num}_{layer_unit} is:', loss_comp(valid_predicts, valid_actual.values.reshape(-1)))
+            print(f'Mean Squared Error of training_{model}_{layer_num}_{layer_unit} is:', loss_comp(train_predicts, train_actual.values.reshape(-1),loss='mse'))
+            print(f'Mean Squared Error of validation_{model}_{layer_num}_{layer_unit} is:', loss_comp(valid_predicts, valid_actual.values.reshape(-1),loss='mse'))
     
-            # models_saver(model=models[model],loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1)))
-            
             # Convert the array lr_loss to a Pandas Series
-            lr_loss = pd.Series(lr_loss )
+            lr_loss = pd.Series(lr_loss)
             lr_loss = pd.DataFrame({f'{model}_{layer_num}_{layer_unit}':lr_loss})
             # Add a common index to both DataFrames
             lr_loss_df.index = range(len(lr_loss_df))
@@ -59,8 +60,8 @@ def main():
             layer_nums_itr.append(layer_num)
             layer_units_itr.append(layer_unit)
             optimal_lrs.append(optimal_lr)
-            validation_mean_squared_errors.append(loss_comp(valid_predicts, valid_actual.values.reshape(-1)))
-            traning_mean_squared_errors.append(loss_comp(train_predicts, train_actual.values.reshape(-1)))
+            validation_mean_squared_errors.append(loss_comp(valid_predicts, valid_actual.values.reshape(-1),loss='mse'))
+            traning_mean_squared_errors.append(loss_comp(train_predicts, train_actual.values.reshape(-1),loss='mse'))
     
     # lr_loss_df=lr_loss_df.T
     print(lr_loss_df)

@@ -3,6 +3,9 @@ import pandas as pd
 import itertools
 from helper import *
 
+import warnings
+warnings.filterwarnings('ignore')
+
 def main():
     cwd = os.getcwd()
     train = pd.read_csv(cwd+'\\results\\data\\training_dataset.csv',index_col='date')
@@ -52,7 +55,7 @@ def main():
          
          train_predicts = model_forecast(model=model_,series=train.values)
          valid_predicts = model_forecast(model=model_,series=valid.values)
-         loss = loss_comp(valid_predicts, valid_actual.values.reshape(-1))
+         loss = loss_comp(valid_predicts, valid_actual.values.reshape(-1),loss = 'rmse')
          print(f'Validation loss of {model} model is : {loss}')
          models_saver(model=model_ ,name = 'LSTM')
          
@@ -80,7 +83,7 @@ def main():
          train_predicts = model_forecast(model=model_,series=train.values)
          valid_predicts = model_forecast(model=model_,series=valid.values)
          
-         loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1))
+         loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1),loss = 'rmse')
          print(f'Validation loss of {model} model is : {loss}')
          
          models_saver(model=model_,name='DNN')
@@ -109,7 +112,7 @@ def main():
          train_predicts = model_forecast(model=model_,series=train.values)
          valid_predicts = model_forecast(model=model_,series=valid.values)
          
-         loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1))
+         loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1),loss = 'rmse')
          print(f'Validation loss of {model} model is : {loss}')
          
          models_saver(model=model_,name = 'RNN')
@@ -138,12 +141,12 @@ def main():
          train_predicts = model_forecast(model=model_,series=train.values)
          valid_predicts = model_forecast(model=model_,series=valid.values)
          
-         loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1))
+         loss=loss_comp(valid_predicts, valid_actual.values.reshape(-1),loss = 'rmse')
          print(f'Validation loss of {model} model is : {loss}')
          
          models_saver(model=model_,name = 'CNN')
          plot_series(train_date,(train_actual, train_predicts),fig_name= f'Actual vs fited values of {model} model (training dataset)',legend=["Actual_values", "Fited_values"],title=f" Fited vs Actual values of {model} model (training dataset)")
-         plot_series(valid_date,(valid_actual, valid_predicts),fig_name= f'Actual vs predicted values of {model} model (validation dataset)',legend=["Actual_values", "predicted_values"],title=f" Fited vs predicted values of {model} model (validation dataset)")
+         plot_series(valid_date,(valid_actual, valid_predicts),fig_name= f'Actual vs predicted values of {model} model (validation dataset)',legend=["Actual_values", "predicted_values"],title=f" Predicted vs Actual values of {model} model (validation dataset)")
        else:
         raise ValueError('Invalid model name: {}'.format(model))
 if __name__ == "__main__":
