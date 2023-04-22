@@ -11,6 +11,7 @@ tf.config.run_functions_eagerly(True)
 
 cwd = os.getcwd()
 
+
 def get_percentage_change(series: pd.Series,length:int) -> pd.Series:
     """
     Returns the percentage change between values in the given series.
@@ -153,7 +154,7 @@ def data_split(time_series=None,test_split_ratio=0.08,valid_split_ratio = 0.20,i
     
     return train,test,valid
 
-def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=100):
+def windowed_dataset(series=None, window_size=None, batch_size=30, shuffle_buffer=100):
 
     """Generates dataset windows
     Args:
@@ -185,8 +186,101 @@ def windowed_dataset(series=None, window_size=12, batch_size=30, shuffle_buffer=
 
     return dataset
 
-# Models -------------------------------------------------------------------------------------------
-def LSTM_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
+# Models structurs -------------------------------------------------------------------------------------------
+
+def NN_construction(layer_units=None,input_shape=None,output_units=1,activation='relu'):
+    """
+    input_layer : number of denses in input layer.
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :DNN model
+    """
+    NN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Dense(
+                    layer_units, activation=activation, input_shape=[input_shape]
+                ),
+                # tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+            ]
+        )
+    return NN
+
+def MLP_construction(layer_num=None,layer_units=None,input_shape=None,output_units=1,activation='relu'):
+    """
+    input_layer : number of denses in input layer.
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :DNN model
+    """
+    if layer_num == 1:
+        MLP = tf.keras.models.Sequential([
+                tf.keras.layers.Dense(layer_units, activation=activation, input_shape=[input_shape]),
+                tf.keras.layers.Dense(output_units)])
+    if layer_num == 2:
+        MLP = tf.keras.models.Sequential([
+                tf.keras.layers.Dense(layer_units, activation, input_shape=[input_shape]),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),])
+    if layer_num == 3:
+        MLP = tf.keras.models.Sequential([
+                tf.keras.layers.Dense( layer_units, activation=activation, input_shape=[input_shape]),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),])
+    return MLP
+
+def simpl_RNN_construction(layer_num=None,layer_units=None,input_shape=None,output_units=1,activation='relu'):
+    """
+
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :RNN model
+    """
+    if layer_num == 1:
+        simple_RNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda( lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]),
+                tf.keras.layers.SimpleRNN(layer_units, return_sequences=True, activation=activation),
+                tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(output_units)),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(1, activation='linear')
+                
+                # tf.keras.layers.Dense(output_units)
+                ])
+    if layer_num == 2:
+        simple_RNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]),
+                tf.keras.layers.SimpleRNN(layer_units, return_sequences=True, activation=activation),
+                tf.keras.layers.SimpleRNN(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+            ]
+        )
+    if layer_num == 3:
+        simple_RNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
+                ),
+                tf.keras.layers.SimpleRNN(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.SimpleRNN(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.SimpleRNN(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+            ]
+        )
+    return simple_RNN
+
+def LSTM_construction(layer_num=None,layer_units=None,input_shape=None,output_units=1,activation='relu'):
 
     """
     input_layer : number of denses in input layer.
@@ -202,17 +296,86 @@ def LSTM_construction(layer_num=None,layer_units=None,input_shape=12,output_unit
                 tf.keras.layers.Lambda(
                     lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
                 ),
-                tf.keras.layers.Bidirectional(
+                
                     tf.keras.layers.LSTM(
-                        layer_units, return_sequences=True, activation=activation
-                    )
-                ),
-                tf.keras.layers.Dense(output_units),
+                        layer_units, return_sequences=True, activation=activation              
+                   ),
+                tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(output_units)),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(1, activation='linear')
+                # tf.keras.layers.Dense(output_units),
                 # tf.keras.layers.Lambda(lambda x: x * 100.0),
             ]
         )
     if layer_num == 2:
         LSTM = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(
+                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
+                ),
+                
+                    tf.keras.layers.LSTM(
+                        layer_units, return_sequences=True, activation=activation
+                    )
+                ,
+                
+                    tf.keras.layers.LSTM(layer_units, activation=activation)
+                ,
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 3:
+        LSTM = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]),
+                
+                    tf.keras.layers.LSTM(
+                        layer_units, return_sequences=True, activation=activation)
+                ,
+                
+                    tf.keras.layers.LSTM(
+                        layer_units, return_sequences=True, activation=activation)
+                ,
+                
+                    tf.keras.layers.LSTM(layer_units, activation=activation)
+                ,
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    return LSTM
+
+def BI_LSTM_construction(layer_num=None,layer_units=None,input_shape=None,output_units=1,activation='relu'):
+
+    """
+    input_layer : number of denses in input layer.
+    layer_units: number of denses in hideen layers.
+    layer_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : number of time steps in the input sequence (window_size) 
+    Return :LSTM model
+    """
+    if layer_num == 1:
+        BI_LSTM = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Lambda(
+                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
+                ),
+                tf.keras.layers.Bidirectional(
+                    tf.keras.layers.LSTM(
+                        layer_units, return_sequences=True, activation=activation
+                    )
+                ),
+                tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(output_units)),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(1, activation='linear')
+                # tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 2:
+        BI_LSTM = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Lambda(
                     lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
@@ -230,7 +393,7 @@ def LSTM_construction(layer_num=None,layer_units=None,input_shape=12,output_unit
             ]
         )
     if layer_num == 3:
-        LSTM = tf.keras.models.Sequential(
+        BI_LSTM = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Lambda(
                     lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
@@ -251,108 +414,9 @@ def LSTM_construction(layer_num=None,layer_units=None,input_shape=12,output_unit
                 # tf.keras.layers.Lambda(lambda x: x * 100.0),
             ]
         )
-    return LSTM
+    return BI_LSTM
 
-def DNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
-    """
-    input_layer : number of denses in input layer.
-    hidden_layer: number of denses in hideen layers.
-    hidden_num : number of hidden layers.
-    activation_func: activation function.
-    input_shape : window_size ( sample size)
-    Return :DNN model
-    """
-    if layer_num == 1:
-        DNN = tf.keras.models.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    input_shape, activation=activation, input_shape=[input_shape]
-                ),
-                tf.keras.layers.Dense(layer_units, activation=activation),
-                tf.keras.layers.Dense(output_units),
-            ]
-        )
-    if layer_num == 2:
-        DNN = tf.keras.models.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    input_shape, activation, input_shape=[input_shape]
-                ),
-                tf.keras.layers.Dense(layer_units, activation=activation),
-                tf.keras.layers.Dense(layer_units, activation=activation),
-                tf.keras.layers.Dense(output_units),
-            ]
-        )
-    if layer_num == 3:
-        DNN = tf.keras.models.Sequential(
-            [
-                tf.keras.layers.Dense(
-                    input_shape, activation=activation, input_shape=[input_shape]
-                ),
-                tf.keras.layers.Dense(layer_units, activation=activation),
-                tf.keras.layers.Dense(layer_units, activation=activation),
-                tf.keras.layers.Dense(layer_units, activation=activation),
-                tf.keras.layers.Dense(output_units),
-            ]
-        )
-    return DNN
-
-def RNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
-    """
-
-    hidden_layer: number of denses in hideen layers.
-    hidden_num : number of hidden layers.
-    activation_func: activation function.
-    input_shape : window_size ( sample size)
-    Return :RNN model
-    """
-    if layer_num == 1:
-        simple_RNN = tf.keras.models.Sequential(
-            [
-                tf.keras.layers.Lambda(
-                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
-                ),
-                tf.keras.layers.SimpleRNN(
-                    layer_units, return_sequences=True, activation=activation
-                ),
-                tf.keras.layers.Dense(output_units),
-                # tf.keras.layers.Lambda(lambda x: x * 100.0),
-            ]
-        )
-    if layer_num == 2:
-        simple_RNN = tf.keras.models.Sequential(
-            [
-                tf.keras.layers.Lambda(
-                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
-                ),
-                tf.keras.layers.SimpleRNN(
-                    layer_units, return_sequences=True, activation=activation
-                ),
-                tf.keras.layers.SimpleRNN(layer_units, activation=activation),
-                tf.keras.layers.Dense(output_units),
-                # tf.keras.layers.Lambda(lambda x: x * 100.0),
-            ]
-        )
-    if layer_num == 3:
-        simple_RNN = tf.keras.models.Sequential(
-            [
-                tf.keras.layers.Lambda(
-                    lambda x: tf.expand_dims(x, axis=-1), input_shape=[input_shape]
-                ),
-                tf.keras.layers.SimpleRNN(
-                    layer_units, return_sequences=True, activation=activation
-                ),
-                tf.keras.layers.SimpleRNN(
-                    layer_units, return_sequences=True, activation=activation
-                ),
-                tf.keras.layers.SimpleRNN(layer_units, activation=activation),
-                tf.keras.layers.Dense(output_units),
-                # tf.keras.layers.Lambda(lambda x: x * 100.0),
-            ]
-        )
-    return simple_RNN
-
-def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units=1,activation='relu'):
+def CNN_construction(layer_num=None,layer_units=None,input_shape=None,output_units=1,activation='relu'):
     """
     input_layer : number of denses in input layer.
     hidden_layer: number of denses in hideen layers.
@@ -372,8 +436,10 @@ def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units
                     activation=activation,
                     input_shape=[input_shape, 1],
                 ),
-                tf.keras.layers.LSTM(
-                    layer_units, return_sequences=True, activation=activation
+                tf.keras.layers.MaxPooling1D(pool_size=2),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(
+                    layer_units, activation=activation
                 ),
                 tf.keras.layers.Dense(output_units),
                 # tf.keras.layers.Lambda(lambda x: x * 100.0),
@@ -381,6 +447,79 @@ def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units
         )
     if layer_num == 2:
         CNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Conv1D(
+                    filters=64,
+                    kernel_size=3,
+                    strides=1,
+                    padding="causal",
+                    activation=activation,
+                    input_shape=[input_shape, 1],
+                ),
+                tf.keras.layers.MaxPooling1D(pool_size=2),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 3:
+        CNN = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Conv1D(
+                    filters=64,
+                    kernel_size=3,
+                    strides=1,
+                    padding="causal",
+                    activation=activation,
+                    input_shape=[input_shape, 1],
+                ),
+                tf.keras.layers.MaxPooling1D(pool_size=2),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(layer_units, activation=activation),
+                tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    return CNN
+
+def CNN_LSTM_construction(layer_num=None,layer_units=None,input_shape=None,output_units=1,activation='relu'):
+    """
+    input_layer : number of denses in input layer.
+    hidden_layer: number of denses in hideen layers.
+    hidden_num : number of hidden layers.
+    activation_func: activation function.
+    input_shape : window_size ( sample size)
+    Return :LASTM model
+    """
+    if layer_num == 1:
+        CNN_LSTM = tf.keras.models.Sequential(
+            [
+                tf.keras.layers.Conv1D(
+                    filters=64,
+                    kernel_size=3,
+                    strides=1,
+                    padding="causal",
+                    activation=activation,
+                    input_shape=[input_shape, 1],
+                ),
+                tf.keras.layers.LSTM(
+                    layer_units, return_sequences=True, activation=activation
+                ),
+                tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(output_units)),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(1, activation='linear')
+                
+                
+                # tf.keras.layers.Dense(output_units),
+                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+            ]
+        )
+    if layer_num == 2:
+        CNN_LSTM = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Conv1D(
                     filters=64,
@@ -399,7 +538,7 @@ def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units
             ]
         )
     if layer_num == 3:
-        CNN = tf.keras.models.Sequential(
+        CNN_LSTM = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Conv1D(
                     filters=64,
@@ -413,14 +552,14 @@ def CNN_construction(layer_num=None,layer_units=None,input_shape=12,output_units
                     layer_units, return_sequences=True, activation=activation
                 ),
                 tf.keras.layers.LSTM(
-                    layer_units, return_sequences=True, activation=activation
+                    layer_units, activation=activation
                 ),
                 tf.keras.layers.LSTM(layer_units, activation=activation),
                 tf.keras.layers.Dense(output_units),
                 # tf.keras.layers.Lambda(lambda x: x * 100.0),
             ]
         )
-    return CNN
+    return CNN_LSTM
 
 # -----------------------------------------------------------------------------------------------------
 
@@ -543,28 +682,8 @@ def plot_training_validation_loss(model=None,history=None):
     val_loss = history.history["val_loss"]
     epochs = range(len(loss))
     plot_series(epochs, (loss,val_loss), fig_name=f'{model}_training_loss.png', title=f"{model} training loss",xlabel='Epochs',ylabel='Loss',legend=['Training Loss','Validation Loss'],loss = val_loss)
-    
-# def loss_comp(y_pred, y_truth, loss= 'mse'):
-#     """
-#     y_pred: predicted values.
-#     y_truth: ground truth.
-#     loss_func: the function used to calculate loss.
-#     return loss value.
-#     """
-#     if loss == "mse":
-#         return tf.keras.metrics.mean_squared_error(y_pred, y_truth).numpy()
-#         # mean_squared_error(y_truth, y_pred)
-#     elif loss == "mae":
-#         return tf.keras.metrics.mean_absolute_error(y_pred, y_truth).numpy()
-#         # r2_score(y_truth, y_pred)
-#     else:
-#         if loss != "rmse":
-#             print(
-#                 "The loss functin is illegal. Turn to default loss function: mse"
-#             )
-#         return tf.keras.metrics.RootMeanSquaredError(y_pred, y_truth).numpy
-        
-def model_forecast(model, series, window_size=12, batch_size=30):
+           
+def model_forecast(model, series, window_size=None , batch_size=30):
 
     """Uses an input model to generate predictions on data windows
 
@@ -602,3 +721,30 @@ def models_loader (model):
   saved_model = f"{model}_model.h5"
   model = tf.keras.models.load_model(cwd + f'\\results\\models\\{saved_model}',compile=False )
   return model
+
+def get_optimal_hyperparamaters(tuning_result,model_name):
+    # read the dataframe
+    df = pd.read_csv(tuning_result)
+
+    # filter the rows based on the model name
+    model_rows = df[df['Model'] == model_name]
+
+    # get the row with the minimum Mean Squared Errors (validation)
+    min_row = model_rows.loc[model_rows['Mean Squared Errors (validation)'].idxmin()]
+
+    # return the result
+    return min_row
+
+
+
+def config_plot():
+    plt.style.use('seaborn-paper')
+#    plt.rcParams.update({'axes.prop_cycle': cycler(color='jet')})
+    plt.rcParams.update({'axes.titlesize': 20})
+    plt.rcParams['legend.loc'] = 'best'
+    plt.rcParams.update({'axes.labelsize': 22})
+    plt.rcParams.update({'xtick.labelsize': 16})
+    plt.rcParams.update({'ytick.labelsize': 16})
+    plt.rcParams.update({'figure.figsize': (10, 6)})
+    plt.rcParams.update({'legend.fontsize': 20})
+    return 1
