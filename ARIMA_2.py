@@ -11,7 +11,7 @@ import os
 
 
 class Arima_Class:
-    def __init__(self, arima_para, seasonal_para,start_period,end_period, criteria):
+    def __init__(self, arima_para, seasonal_para,start_period,end_period):
         # Define the p, d and q parameters in Arima(p,d,q)(P,D,Q) models
         p = arima_para['p']
         d = arima_para['d']
@@ -19,54 +19,56 @@ class Arima_Class:
         # Generate all different combinations of p, q and q triplets
         self.pdq = list(itertools.product(p, d, q))
         # Generate all different combinations of seasonal p, q and q triplets
-        self.seasonal_pdq = [(x[0], x[1], x[2], seasonal_para)
-                             for x in list(itertools.product(p, d, q))]
+        # self.seasonal_pdq = [(x[0], x[1], x[2], seasonal_para)
+                            #  for x in list(itertools.product(p, d, q))]
         self.start_period = start_period
         self.end_period = end_period
-        self.criteria = criteria
-                
-    def fit(self, ts ):
+                   
+    def tuning_parameters(self,ts):
         warnings.filterwarnings("ignore")
-        
-        results_list = []
+        self.results_list = []
         for param in self.pdq:
-            for param_seasonal in self.seasonal_pdq:
+            # for param_seasonal in self.seasonal_pdq:
                 try:
                     mod = sm.tsa.statespace.SARIMAX(ts[self.start_period:self.end_period],
                                                     order=param,
-                                                    seasonal_order=param_seasonal,
+                                                    # seasonal_order=param_seasonal,
                                                     enforce_stationarity=False,
                                                     enforce_invertibility=False)
                     
                     results = mod.fit(disp=False)
 
-                    print('ARIMA{}x{}seasonal - AIC:{}'.format(param,
-                                                               param_seasonal, results.aic, results.bic))
-                    results_list.append([param, param_seasonal, results.aic, results.bic])
+                    print('ARIMA{} with AIC={} and BIC={}'.format(param,results.aic, results.bic))
+                                                            #    param_seasonal, 
+                    self.results_list.append([param, results.aic, results.bic])
+                                        #  param_seasonal, results.aic, results.bic])
                 except:
                     continue
-        results_list = np.array(results_list)
-        lowest_AIC = np.argmin(results_list[:, 2])
-        lowest_BIC = np.argmin(results_list[:, 3])
+        
+    def fit(self, ts ,criteria ):
+        self.criteria = criteria
+        results_list = np.array(self.results_list)
+        lowest_AIC = np.argmin(results_list[:, 1])
+        lowest_BIC = np.argmin(results_list[:, 2])
         
         print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         if self.criteria == 'AIC':
-           print('ARIMA{}x{}seasonal with lowest_AIC:{}'.format(
-            results_list[lowest_AIC, 0], results_list[lowest_AIC, 1], results_list[lowest_AIC, 2]))
+           print('ARIMA{} with lowest_AIC:{}'.format(
+            results_list[lowest_AIC, 0], results_list[lowest_AIC, 1]))
            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
            mod = sm.tsa.statespace.SARIMAX(ts[self.start_period:self.end_period],
                                         order=results_list[lowest_AIC, 0],
-                                        seasonal_order=results_list[lowest_AIC, 1],
+                                        # seasonal_order=results_list[lowest_AIC, 1],
                                         enforce_stationarity=False,
                                         enforce_invertibility=False)
            
         else:
-           print('ARIMA{}x{}seasonal with lowest_BIC:{}'.format(
-            results_list[lowest_BIC, 0], results_list[lowest_BIC, 1], results_list[lowest_BIC, 3]))
+           print('ARIMA{} with lowest_BIC:{}'.format(
+            results_list[lowest_BIC, 0], results_list[lowest_BIC, 2]))
            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
            mod = sm.tsa.statespace.SARIMAX(ts[self.start_period:self.end_period],
                                         order=results_list[lowest_BIC, 0],
-                                        seasonal_order=results_list[lowest_BIC, 1],
+                                        # seasonal_order=results_list[lowest_BIC, 1],
                                         enforce_stationarity=False,
                                         enforce_invertibility=False)
            
@@ -115,7 +117,7 @@ class Arima_Class:
         pred_ci = pred_uc.conf_int()
         # plot
         # Create a new figure and an AxesSubplot object
-        fig, ax = plt.subplots(figsize=(15, 10))
+        fig, ax = plt.subplots(figsize=(8, 8))
         # ax = ts[plot_start:].plot(label={'CPI(%)':'Observed'}, figsize=(15, 10))
         # Plot the observed data
         ax.plot(ts[plot_start:].index, ts[plot_start:], label='Observed')
@@ -133,7 +135,7 @@ class Arima_Class:
         # Save the figure and show the plot
         plt.tight_layout()
         plt.legend()
-        plt.savefig(cwd + f'\\results\\graphs\\ARIMA-{self.criteria}_model_forcast.png', dpi=300)
+        plt.savefig(cwd + f'\\results\\graphs\\ARIMA-{self.criteria}_model_forcast.png', dpi=300,bbox_inches='tight')
         
         plt.show()
         return pred_uc.predicted_mean
@@ -162,22 +164,24 @@ ts_label = 'Inflation rate'
 
 # "Grid search" of seasonal ARIMA model.
 
-arima_para = {'p':range(1,2),'d':range(2),'q':range(1,2)}    
+arima_para = {'p':range(1,13),'d':range(1,2),'q':range(1,13)}    
     
 # the seasonal periodicy is  12 month
 seasonal_para = 12
 
 test_steps = 24
 
-for criteria in ['AIC','BIC']:
-    
-    arima = Arima_Class(arima_para, seasonal_para,start_period= inf.index[0] , end_period= inf.index[-test_steps] ,criteria=criteria)
 
+    
+arima = Arima_Class(arima_para, seasonal_para,start_period= inf.index[0] , end_period= inf.index[-test_steps] )
+arima.tuning_parameters(inf)
+
+for criteria in ['AIC','BIC']:
     # fitting the model
-    arima.fit(inf)
+    arima.fit(inf,criteria=criteria)
 
     # Forecasts to unseen future data
-    forecast = arima.forcast(inf,plot_start= '1-1-2015', n_steps= 24 , ts_label =ts_label )
+    forecast = arima.forcast(inf,plot_start= '2019', n_steps= 24 , ts_label =ts_label )
     
     # forecasting performence on test set 
     arima.test_performence(inf,forecast)

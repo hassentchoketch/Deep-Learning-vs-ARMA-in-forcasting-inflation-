@@ -143,8 +143,8 @@ def data_split(time_series=None,test_split_ratio=0.08,valid_split_ratio = 0.20,i
         test_split_ratio = 0.3
 
     train = time_series[0 : round(len(time_series) * (1-(test_split_ratio + valid_split_ratio)))]
-    test  = time_series[round(len(time_series) * (1-test_split_ratio))-12 :]
-    valid = time_series[round(len(train)) : (round(len(time_series))-round(len(test))+12)]
+    test  = time_series[round(len(time_series) * (1-test_split_ratio))-24 :]
+    valid = time_series[round(len(train)) - 24 : (round(len(time_series))-round(len(test))+12)]
     # train = train[0 : round(len(train) * (1-valid_split_ratio))]
     
     if if_save:
@@ -529,12 +529,10 @@ def CNN_LSTM_construction(layer_num=None,layer_units=None,input_shape=None,outpu
                     activation=activation,
                     input_shape=[input_shape, 1],
                 ),
-                tf.keras.layers.LSTM(
-                    layer_units, return_sequences=True, activation=activation
-                ),
+                tf.keras.layers.LSTM(layer_units, return_sequences=True, activation=activation),
                 tf.keras.layers.LSTM(layer_units, activation=activation),
                 tf.keras.layers.Dense(output_units),
-                # tf.keras.layers.Lambda(lambda x: x * 100.0),
+                
             ]
         )
     if layer_num == 3:
@@ -548,12 +546,9 @@ def CNN_LSTM_construction(layer_num=None,layer_units=None,input_shape=None,outpu
                     activation=activation,
                     input_shape=[input_shape, 1],
                 ),
-                tf.keras.layers.LSTM(
-                    layer_units, return_sequences=True, activation=activation
-                ),
-                tf.keras.layers.LSTM(
-                    layer_units, activation=activation
-                ),
+                # tf.keras.layers.Reshape((input_shape, 64)),
+                tf.keras.layers.LSTM(layer_units, return_sequences=True, activation=activation),
+                tf.keras.layers.LSTM(layer_units, activation=activation),
                 tf.keras.layers.LSTM(layer_units, activation=activation),
                 tf.keras.layers.Dense(output_units),
                 # tf.keras.layers.Lambda(lambda x: x * 100.0),
@@ -565,7 +560,7 @@ def CNN_LSTM_construction(layer_num=None,layer_units=None,input_shape=None,outpu
 
 def tune_learning_rate(model=None,dataset= None,validation_data=None,fig_name=None, title = None ,patience = 5 ,loss='mse', epochs= 100,momentum=0.9,plot = False):
     # Define the learning rate schedule
-    lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-5 * 5 ** (epoch / 20))
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 1e-5 * 7 ** (epoch / 20))
 
     # Define the optimizer and compile the model
     optimizer = tf.keras.optimizers.SGD(momentum)
@@ -578,7 +573,7 @@ def tune_learning_rate(model=None,dataset= None,validation_data=None,fig_name=No
     history = model.fit(dataset, epochs=epochs, validation_data=validation_data, callbacks=[lr_schedule, early_stopping],verbose=0)
     
     # Compute the learning rates used during training
-    lrs = 1e-5 * (5 ** (np.arange(epochs) / 20))
+    lrs = 1e-5 * (7 ** (np.arange(epochs) / 20))
     
 
     lr_loss = history.history['loss']
@@ -672,7 +667,7 @@ def plot_series(x,y,fig_name=None,format="-",start=0,end=None,title=None,xlabel=
     # Overlay a grid on the graph
     plt.grid(True)
     # plt.text(0.95, 0.01, " ** loss value = : {:0.4f}".format(loss), verticalalignment='bottom', horizontalalignment='right',color='green',fontsize=12)
-   
+    plt.xticks(rotation= 20)
     plt.savefig(cwd + f'\\results\\graphs\\{fig_name}')
     # Draw the graph on screen
     plt.close()
@@ -730,7 +725,7 @@ def get_optimal_hyperparamaters(tuning_result,model_name):
     model_rows = df[df['Model'] == model_name]
 
     # get the row with the minimum Mean Squared Errors (validation)
-    min_row = model_rows.loc[model_rows['Mean Squared Errors (validation)'].idxmin()]
+    min_row = model_rows.loc[model_rows['Root Mean Squared Errors (validation)'].idxmin()]
 
     # return the result
     return min_row
@@ -742,9 +737,9 @@ def config_plot():
 #    plt.rcParams.update({'axes.prop_cycle': cycler(color='jet')})
     plt.rcParams.update({'axes.titlesize': 20})
     plt.rcParams['legend.loc'] = 'best'
-    plt.rcParams.update({'axes.labelsize': 22})
-    plt.rcParams.update({'xtick.labelsize': 16})
-    plt.rcParams.update({'ytick.labelsize': 16})
+    plt.rcParams.update({'axes.labelsize':20})
+    plt.rcParams.update({'xtick.labelsize': 14})
+    plt.rcParams.update({'ytick.labelsize': 14})
     plt.rcParams.update({'figure.figsize': (10, 6)})
-    plt.rcParams.update({'legend.fontsize': 20})
+    plt.rcParams.update({'legend.fontsize': 18})
     return 1
