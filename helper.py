@@ -170,7 +170,7 @@ def windowed_dataset(series=None, window_size=None, batch_size=30, shuffle_buffe
     dataset = tf.data.Dataset.from_tensor_slices(series)
 
     # Window the data but only take those with the specified size
-    dataset = dataset.window(window_size + 1, shift=1, drop_remainder=True)
+    dataset = dataset.window(window_size+1 , shift=1, drop_remainder=True)
 
     # Flatten the windows by putting its elements in a single batch
     dataset = dataset.flat_map(lambda window: window.batch(window_size + 1))

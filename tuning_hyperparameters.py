@@ -78,7 +78,7 @@ def main():
     lr_loss_df.to_csv(cwd + f'\\results\\tuning_lr_loss.csv')
     
     tuning_summary = pd.DataFrame({'Model':model_name,
-                                   'Input shape':inputs,
+                                   'Input shape':window_size,
                                    'Layers':layer_nums_itr,
                                    'Units':layer_units_itr,
                                    'Learning rate':optimal_lrs,

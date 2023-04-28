@@ -12,7 +12,7 @@ def main():
     
     test = pd.read_csv(cwd+'\\results\\data\\testing_dataset.csv',index_col='date',parse_dates=['date'])
     
-    models  = ['NN','MLP','simpl_RNN','LSTM','BI_LSTM','CNN' ] 
+    models  = ['NN','MPL','simpl_RNN','LSTM','BI_LSTM','CNN' ] 
     metrics = ['rmse','mae']
     horizons= [6,12,18,24]
     
@@ -21,7 +21,13 @@ def main():
     for model in models:
             hyp_param = get_optimal_hyperparamaters(cwd+'\\results\\tuning_summary.csv', model)
             model_ = models_loader(model)
-            forecasts = model_forecast(model = model_ , series = test.values ,window_size =hyp_param[2])
+            if hyp_param[2]   == 12 :
+               forecasts = model_forecast(model = model_ , series = test[12+1:].values ,window_size =hyp_param[2])
+            elif hyp_param[2] == 18 :
+               forecasts = model_forecast(model = model_ , series = test[6+1:].values ,window_size =hyp_param[2])
+            else:
+               forecasts = model_forecast(model = model_ , series = test[1:].values ,window_size =hyp_param[2])
+
             actual = test.values
         
             # Calculate the prediction intervals
@@ -34,8 +40,8 @@ def main():
             # Plot the predicted values and their associated prediction intervals
             fig =plt.figure(figsize=(8,8))
             plt.plot(test.index,actual, label='Observed')
-            plt.plot(test[hyp_param[2] - 1 :].index,forecasts, label='Out-of-sample Forecast')
-            plt.fill_between(test[hyp_param[2] - 1 :].index, 
+            plt.plot(test[24  :].index,forecasts, label='Out-of-sample Forecast')
+            plt.fill_between(test[24  :].index, 
                             forecasts - prediction_interval, 
                             forecasts + prediction_interval, 
                             color='gray', 
