@@ -22,8 +22,8 @@ page = st.sidebar.radio("Select a page", pages)
 def get_data(start_year,end_year): 
     # Import Data
     # df = pd.read_csv('/home/hacene/Insync/tchoketch-kebir@hotmail.fr/OneDrive/Bureau/My_github/Deep-Learning-vs-ARMA-in-forcasting-inflation-/Deep-Learning-vs-ARMA-in-forcasting-inflation-/streamlit_App/DZ_Consumption_price_index.csv')
-    # df = pd.read_csv("/home/hacene/Insync/tchoketch-kebir@hotmail.fr/OneDrive/Bureau/My_github/inflation_rate_prediction_LSTM/results/data/DZ_Consumption_price_index.csv")#, index_col=0)
-    df = pd.read_csv(cwd + '/streamlit_App/DZ_Consumption_price_index.csv')
+    df = pd.read_csv("/home/hacene/Insync/tchoketch-kebir@hotmail.fr/OneDrive/Bureau/My_github/inflation_rate_prediction_LSTM/results/data/DZ_Consumption_price_index.csv")#, index_col=0)
+    # df = pd.read_csv(cwd + '/streamlit_App/DZ_Consumption_price_index.csv')
     df['date'] = pd.to_datetime(df['date'])
     # Set 'date_column' as the index
     df.set_index('date', inplace=True)
