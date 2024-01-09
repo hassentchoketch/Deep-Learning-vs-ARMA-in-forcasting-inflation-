@@ -75,7 +75,7 @@ def show_forecasts(df):
     models = ['MPL', 'NN', 'simpl_RNN', 'LSTM', 'BI_LSTM', 'CNN']
     model_ = st.sidebar.selectbox(label="Select Model", options=models, index=0)
     # model = models_loader(f'/home/hacene/Insync/tchoketch-kebir@hotmail.fr/OneDrive/Bureau/My_github/inflation_rate_prediction_LSTM/results/models/{model_}_model.h5')
-    model = models_loader(f'/models/{model_}_model.h5')
+    model = models_loader(cwd + f'/models/{model_}_model.h5')
 
     if forecast_type == 'Within_Sample_Forecast':
         forecasts = model_forecast(model=model, series=df['Inflation Rate'].loc[:'2015-12-01'].values)
