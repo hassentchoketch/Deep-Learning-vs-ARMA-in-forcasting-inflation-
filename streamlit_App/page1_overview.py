@@ -37,7 +37,7 @@ def show_overview(df):
         fig1.update_layout(
         title="Inflation Rate (Monthly, Year-over-Year)",
         yaxis=dict(title_text="Inflation Rate (%)", titlefont=dict(size=12)),
-        xaxis=dict(title_text="Date", titlefont=dict(size=12)),
+        # xaxis=dict(title_text="Date", titlefont=dict(size=12)),
         legend=dict(x=0, y=1, traceorder='normal', orientation='v'))
 
 
